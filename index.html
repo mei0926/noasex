@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="apple-touch-icon" href="dat/ios.png" />
+<meta name="apple-mobile-web-app-title" content="チケプラ電子チケット" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&display=swap" rel="stylesheet"/>
+<meta name="robots" content="noindex, nofollow">
+<style>
+html, body, * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  margin: 0; padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+#container { position: relative; width:100%; height:100%; }
+.page {
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
+  background-size: cover;
+  background-position: center;
+  display: none;
+}
+#p1 { background-image: url('p1.png'); }
+#p2 { background-image: url('p2.png'); }
+#p3 { background-image: url('p3.png'); }
+
+/* 時計 */
+#clock,#clockP3 {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    height: 25px;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: 1000;
+    color: rgb(65, 25, 130);
+    background: transparent;
+    line-height: normal;
+    text-align: center;
+    z-index: 3;
+}
+
+/* 1→2透明ボタン */
+.btn {
+  position: absolute;
+  width: 100%;
+  height: 70%;
+  top: 60%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* スライドエリア */
+#swipeArea {
+  position: absolute;
+  top: 38%; 
+  left: 2.5%;
+  width: 95%;
+  height: 60px;
+  background: #787878; 
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+/* 紫バー */
+#swipeBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 10%; /* 初期幅 */
+  background: rgb(65, 25, 130);
+  border-radius: 50px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+/* バーテキスト */
+#barText {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 10px;
+  color: white;
+  font-weight: bold;
+  z-index: 2;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+/* スライドボタン */
+#sliderKnob {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  transform: translate(-50%, -50%);
+  width: 60px;  
+  height: 60px;
+  background: rgb(65, 25, 130);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* エリアテキスト */
+#areaText {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  padding-top: 20px;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  z-index: 0;
+  text-align: center;
+  pointer-events: none;
+  line-height: 1.2em;
+}
+
+/* iOS風ポップアップ */
+#alertOverlay {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#alertBox {
+  width: 80%;
+  top:50%;
+  max-width: 250px;
+  background: rgba(255,255,255,0.95); /* 半透明に */
+  height:110px;
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;  /* 縦並び */
+  margin-top: -40px;
+}
+
+#alertMessage {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin: 20px 0 0 0; /* 上下余白調整で少し下に */
+}
+
+#alertButtons {
+  display: flex;
+  border-top: 1px solid #ccc;
+  height: 120px;   /* 高さ固定 */
+}
+
+#alertButtons button {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+#cancelBtn { border-right: 1px solid #ccc; color: rgb(65,25,130);font-weight: 900;}
+#okBtn { color: rgb(65,25,130); font-weight: 900; }
+
+/* P3表示時刻タイムスタンプ */
+#p3Timestamp {
+  position: absolute;
+  top: 31.5%;           /* 画面上部からの位置 */
+  left: 73%;
+  transform: translateX(-50%);
+  font-size: 16.5px;
+  font-weight: bold;
+  color: #807e7e;
+  z-index: 2;
+}
+
+
+</style>
+</head>
+<body>
+<div id="container">
+  <!-- P1 -->
+  <div id="p1" class="page" style="display:block;">
+    <button class="btn" id="toP2"></button>
+  </div>
+
+  <!-- P2 -->
+  <div id="p2" class="page">
+    <div id="swipeArea">
+      <div id="swipeBar">
+        <div id="barText">1枚で入場する</div>
+      </div>
+      <div id="sliderKnob">→</div>
+      <div id="areaText"><span style="color:rgb(84, 30, 171);">1枚</span>で入場する<br>（係員が操作）</div>
+    </div>
+    <div id="clock"></div>
+  </div>
+
+  <!-- P3 -->
+  <div id="p3" class="page">
+  <div id="clockP3"></div>
+   <div id="p3Timestamp" ></div>
+</div>
+
+<!-- ポップアップ -->
+<div id="alertOverlay">
+  <div id="alertBox">
+    <div id="alertMessage">入場済みにする</div>
+    <div id="alertButtons">
+      <button id="cancelBtn">キャンセル</button>
+      <button id="okBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ページ切替
+const pages = { p1: document.getElementById('p1'), p2: document.getElementById('p2'), p3: document.getElementById('p3') };
+function showPage(id){ Object.values(pages).forEach(p=>p.style.display='none'); pages[id].style.display='block'; }
+document.getElementById('toP2').addEventListener('click', ()=>showPage('p2'));
+
+// 時計
+function updateClock(){
+  const now = new Date();
+  const hh=String(now.getHours()).padStart(2,'0');
+  const mm=String(now.getMinutes()).padStart(2,'0');
+  const ss=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent=`現在:${hh}:${mm}:${ss}`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function updateClockP3(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockP3').textContent = `現在:${hh}:${mm}:${ss}`;
+}
+setInterval(updateClockP3, 1000);
+updateClockP3();
+
+
+
+// スライダー
+const swipeArea = document.getElementById('swipeArea');
+const swipeBar = document.getElementById('swipeBar');
+const sliderKnob = document.getElementById('sliderKnob');
+const barText = document.getElementById('barText');
+const alertOverlay = document.getElementById('alertOverlay');
+const okBtn = document.getElementById('okBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+
+let dragging = false;
+let initialProgress = 0.1;
+swipeBar.style.width = `${initialProgress*100}%`;
+sliderKnob.style.left = `${initialProgress*100}%`;
+
+// バーテキスト
+function updateBarText(progress){
+    const barWidth = swipeBar.offsetWidth;
+    const textWidth = barText.offsetWidth;
+    const x = progress * (swipeArea.offsetWidth - textWidth);
+    const finalX = Math.min(x, barWidth/2 - textWidth/2);
+    barText.style.transform = `translateX(${finalX}px)`;
+}
+updateBarText(initialProgress);
+
+// スライダー更新
+function updateSlider(clientX){
+  const rect = swipeArea.getBoundingClientRect();
+  let pos = clientX - rect.left;
+  pos = Math.min(Math.max(pos,0), rect.width);
+  const progress = pos/rect.width;
+
+  swipeBar.style.width = `${progress*100}%`;
+  sliderKnob.style.left = `${progress*100}%`;
+  updateBarText(progress);
+
+  return progress;
+}
+
+// マウス
+swipeArea.addEventListener('mousedown', e=>{ dragging=true; updateSlider(e.clientX); });
+document.addEventListener('mousemove', e=>{ if(dragging) updateSlider(e.clientX); });
+document.addEventListener('mouseup', e=>{
+  if(dragging){
+    const prog = updateSlider(e.clientX);
+    if(prog>0.8) alertOverlay.style.display='flex';
+    else updateSlider(initialProgress*swipeArea.offsetWidth);
+  }
+  dragging=false;
+});
+
+// タッチ
+swipeArea.addEventListener('touchstart', e=>{ dragging=true; updateSlider(e.touches[0].clientX); });
+swipeArea.addEventListener('touchmove', e=>{ if(dragging) updateSlider(e.touches[0].clientX); });
+swipeArea.addEventListener('touchend', e=>{
+  if(dragging){
+    const prog = updateSlider(e.changedTouches[0].clientX);
+    if(prog>0.8) alertOverlay.style.display='flex';
+    else updateSlider(initialProgress*swipeArea.offsetWidth);
+  }
+  dragging=false;
+});
+
+// ポップアップボタン
+cancelBtn.addEventListener('click', ()=>{ alertOverlay.style.display='none'; updateSlider(initialProgress*swipeArea.offsetWidth); });
+okBtn.addEventListener('click', ()=>{
+  alertOverlay.style.display='none';
+  showPage('p3');
+});
+
+function showPage(id){
+  Object.values(pages).forEach(p => p.style.display='none');
+  pages[id].style.display='block';
+
+  if(id === 'p3'){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('p3Timestamp').textContent = `(${hh}:${mm})`;
+  }
+}
+
+</script>
+</body>
+</html>
